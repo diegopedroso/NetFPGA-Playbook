@@ -1,3 +1,8 @@
+[all:vars]
+provider=netfpga
+ansible_ssh_port=22
+ansible_ssh_user=netfpga
+
 [netfpgas]
 netfpga1 192.168.89.107
 netfpga2 192.168.89.109

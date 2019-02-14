@@ -28,10 +28,10 @@
     command: for i in `seq 0 3`; do ifconfig nf2c$i up; done
 
   - name: Compilação MODPROBE
-    command:  /root/netfpga/projects/driver/regress/modprobe/./run
+    command: /root/netfpga/projects/driver/regress/modprobe/./run
 
   - name: Verificando as Interfaces
-    command:  /root/netfpga/projects/driver/regress/verify_4_interfaces/./run
+    command: /root/netfpga/projects/driver/regress/verify_4_interfaces/./run
 
 # Copiando Arquivos para os diretórios criados
 
