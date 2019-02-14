@@ -1,0 +1,114 @@
+---
+# tasks file for centos7-basic
+
+- hosts: netfpgas
+  tasks:
+
+# Criando os diretórios e copiando os arquivos
+
+   - file:
+       path: /root/RPM
+       state: directory
+       mode: 777
+
+   - file:
+       path: /root/bit
+       state: directory
+       mode: 777
+ 
+   - file:
+       path: /root/ISE
+       state: directory
+       mode: 777
+
+
+  - copy:
+      src: /files/RPM
+      dest: /root/RPM
+
+  - copy:
+      src: /file/ISE
+      dest: /root/ISE
+
+  - copy:
+      src: /file/bits
+      dest: /root/bits
+
+
+# Instalando Pacotes
+
+  - name: Atualizando o repositório CentOS-7
+    yum:
+     name: '*'
+     state: latest
+     update_cache: yes
+
+  - name: Instalando pacotes
+    yum: name={{ item }} state=latest
+    with_items:
+      - {}
+      - kernel-devel 
+      - scapy
+      - gcc
+      - libnet-devel
+      - java-1.6.0-openjdk-devel
+      - epel-release
+      - python-argparse
+      - htop
+      - hping3
+      - iperf
+      - wget
+      - git
+      - gtkwave
+      - perl-XML-Simple
+      - perl-Switch
+      - ncurses-devel
+      - rpm-build
+      - libpcap-devel
+      - perl-Net-IP
+      - cpanspec
+      - perl-Test-Simple
+
+  - name: Instalando Pacotes Parte 1
+    shell: yum -y groupinstall "GNOME Desktop"
+
+  - name: Instalando Pacotes Parte 2
+    shell: yum -y groupinstall "Development Tools"
+
+  - name: Instalando Pacotes Parte 3
+    shell: systemctl set-default graphical.target
+
+  - name: Instalando Pacotes Parte 4
+    shell: systemctl set-default graphical.target
+
+  - name: Instalando Pacotes Parte 5
+    shell: systemctl start graphical.target
+
+
+  - name: Trocando nome das Interfaces de Rede 
+    copy:
+      src: /usr/lib/udev/rules.d/80-net-name-slot.rules
+      dest: /etc/udev/rules.d/80-net-name-slot.rules
+      remote_src: yes
+ 
+  - lineinfile:
+      dest: /etc/udev/rules.d/80-net-name-slot.rules
+      regexp: '^GRUB_CMDLINE_LINUX='
+      line: 'GRUB_CMDLINE_LINUX="net.ifnames=0"'
+
+  - name: Updante Grub
+    shell: grubby --update-kernel=ALL --args=net.ifnames=0
+
+# Primeiro Reboot
+
+  - name: Reboot server
+    command: /sbin/shutdown -r +1
+    async: 0
+    poll: 0
+    ignore_errors: yes
+
+  - name: Aguardando o Reboot
+    local_action: wait_for host={{ ansible_ssh_host }} state=started search_regex=OpenSSH port=22 timeout=300 delay=30
+    delegate_to: localhost
+    failed_when: false
+    changed_when: true

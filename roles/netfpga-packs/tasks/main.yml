@@ -1,0 +1,124 @@
+---
+# tasks file for netfpga-packs
+
+- hosts: netfpga-teste
+  tasks:
+
+  - name: Download do Repositório do Driver
+    git: 
+     repo: https://github.com/diegopedroso/netfpga.git
+     dest: /root/netfpga
+   
+  - name: Compilando arquivos
+    make:
+      chdir: /root/netfpga/lib/C/kernel
+
+# Intalando Drivers netFPGA
+
+  - name: Instalando Drive
+    command: /root/netfpga/projects/driver/regress/driver_install/./run 
+
+  - name: Compilando o Drive
+    command: /root/netfpga/projects/driver/regress/driver_compile/./run 
+
+  - name: Subindo as interfaces de Rede em L2
+    command: for i in `seq 0 3`; do ip link set dev nf2c$i up; done
+
+  - name: Subindo as interfaces de Rede em L3
+    command: for i in `seq 0 3`; do ifconfig nf2c$i up; done
+
+  - name: Compilação MODPROBE
+    command:  /root/netfpga/projects/driver/regress/modprobe/./run
+
+  - name: Verificando as Interfaces
+    command:  /root/netfpga/projects/driver/regress/verify_4_interfaces/./run
+
+# Copiando Arquivos para os diretórios criados
+
+  - name: Movendo CPCI.bit
+    command: cp /root/arquivos.bit/cpci.bit /root/netfpga/projects/cpci
+
+  - name: Movendo CPCI_REPROGRAMMER.bit
+    command:  cp /root/arquivos.bit/cpci_reprogrammer.bit /root/netfpga/projects/cpci
+
+  - name: Movendo CPCI.pl
+    command: cp /root/netfpga/lib/scripts/cpci_reprogram/cpci_reprogram.pl /root/netfpga/projects/cpci
+
+  - name: Movendo CPCI.bit
+    command: cp /root/arquivos.bit/cpci.bit /root/netfpga/projects/cpci
+
+  - name: Instalando pacotes NETFPGA
+    command: rpm -Uhv http://netfpga.org/yum/el5/RPMS/noarch/netfpga-repo-1-1_CentOS5.noarch.rpm
+
+# Compliando Arquivos
+
+  - name: Compilando nf_dowload
+    make:
+      chdir: /root/netfpga/lib/C/download
+
+  - name: Copiando NF_DOWNLOAD
+    command: cp /root/netfpga/lib/C/download/nf_download /usr/local/bin/  
+
+  - name: Compilando Config REG ACESS
+    make:
+      chdir: /root/netfpga/lib/scripts/cpci_config_reg_access
+
+  - name: Definindo as Paths
+    shell: export NF_ROOT=/root/netfpga
+
+  - name: Definindo as Paths
+    shell: export PERL5LIB=/root/netfpga/lib/Perl5
+
+  - name: Compilando Self-Test
+    make:
+      chdir: /root/netfpga/projects/selftest/sw
+
+  - name: Reprogramando a Placa
+    shell: /root/netfpga/lib/scripts/cpci_reprogram/cpci_reprogram.pl --all
+
+
+# Instalação Netfpga-Full
+
+  - copy:
+      src: /home/diego/(FORNECER CAMINHO E NUMERO REFERENTE A MAQUINA)
+      dest: /opt/Xilinx/
+
+  - lineinfile:
+      dest: /root/.bashrc
+      regexp: '^fi='
+      line: 'if[ -f ${NF_ROOT}/bin/nf_profile ]; then source ${NF_ROOT}/bin/nf_profile fi' 
+
+
+  - name: Definindo as Paths Xilinx
+    shell: export LM_LICENSE_FILE=/opt/Xilinx/Xilinx.lic  
+
+  - name: Definindo as Paths Xilinx
+    shell: source /opt/Xilinx/10.1/ISE/settings64.sh
+
+  - name: Instalando pacotes NETFPGA
+    yum: name={{ item }} state=latest
+    with_items:
+      - {}
+      - compat-libstdc++-33-3.2.3-72.el7.x86_64
+      - gcc-c++
+
+
+  - name: Instalando Pacotes de kernel
+    command:  rpm -i /root/RPM/netfpga-kernel-3.0.1-full.i386.rpm
+
+  - name: Instalando Pacotes Perl
+    command: rpm -i /root/RPM/perl-Net-RawIP-0.25-10.el7.x86_64.rpm
+
+  - name: Instalando Pacotes NETFPGA-Utils
+    command: rpm -i /root/RPM/netfpga-utils-3.0.1-full.i386.rpm 
+
+  - name: Finalizando Instalaçao NETFPGA-FULL
+    shell: yum -y install netfpga-base --skip-broken
+   
+ 
+ - name: Compilando e Finalizando a Instalação
+    make:
+      chdir: /root/netfpga
+  - make:
+     chdir: /root/netfpga
+     target: install
