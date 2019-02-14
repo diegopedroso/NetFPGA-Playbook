@@ -13,8 +13,8 @@ Essas características sustentam a escolha do Ansible como ferramenta de apoio a
 
 ### Requisitos
 
-> Ansible
-> Python 
+* Ansible
+* Python 
 
 
 ### Ansible Galaxy
